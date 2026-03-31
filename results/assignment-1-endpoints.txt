@@ -1,0 +1,667 @@
+[ec2-user@ip-172-31-91-96 lsc-lab-4-aws-cloud-lwilanski]$ python3 loadtest/generate_query.py > loadtest/query.json
+[ec2-user@ip-172-31-91-96 lsc-lab-4-aws-cloud-lwilanski]$ source loadtest/endpoints.sh
+[ec2-user@ip-172-31-91-96 lsc-lab-4-aws-cloud-lwilanski]$ bash loadtest/scenario-a.sh "$LAMBDA_ZIP_URL" "$LAMBDA_CONTAINER_URL"
+=== Scenario A: Lambda Cold Start Characterization ===
+Ensure Lambda has been idle for 20+ minutes before running.
+
+--- Lambda Zip (30 sequential requests, 1/sec) ---
+Summary:
+  Success rate:	100.00%
+  Total:	30.1405 sec
+  Slowest:	1.3210 sec
+  Fastest:	0.0748 sec
+  Average:	0.1426 sec
+  Requests/sec:	0.9953
+
+  Total data:	11.13 KiB
+  Size/request:	379 B
+  Size/sec:	378 B
+
+Response time histogram:
+  0.075 sec [1]  |■
+  0.199 sec [28] |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  0.324 sec [0]  |
+  0.449 sec [0]  |
+  0.573 sec [0]  |
+  0.698 sec [0]  |
+  0.823 sec [0]  |
+  0.947 sec [0]  |
+  1.072 sec [0]  |
+  1.196 sec [0]  |
+  1.321 sec [1]  |■
+
+Response time distribution:
+  10.00% in 0.0911 sec
+  25.00% in 0.0959 sec
+  50.00% in 0.1048 sec
+  75.00% in 0.1099 sec
+  90.00% in 0.1176 sec
+  95.00% in 0.1201 sec
+  99.00% in 1.3210 sec
+  99.90% in 1.3210 sec
+  99.99% in 1.3210 sec
+
+
+Details (average, fastest, slowest):
+  DNS+dialup:	0.0576 sec, 0.0576 sec, 0.0576 sec
+  DNS-lookup:	0.0001 sec, 0.0001 sec, 0.0001 sec
+
+Status code distribution:
+  [200] 30 responses
+
+Waiting 20 minutes before container variant (for cold start reset)...
+Press Ctrl+C to skip the wait if running variants separately.
+Sleeping 1200s (20 min)...
+
+
+--- Lambda Container (30 sequential requests, 1/sec) ---
+Summary:
+  Success rate:	100.00%
+  Total:	30.1193 sec
+  Slowest:	3.2322 sec
+  Fastest:	0.0777 sec
+  Average:	0.2012 sec
+  Requests/sec:	0.9960
+
+  Total data:	11.13 KiB
+  Size/request:	379 B
+  Size/sec:	378 B
+
+Response time histogram:
+  0.078 sec [1]  |■
+  0.393 sec [28] |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  0.709 sec [0]  |
+  1.024 sec [0]  |
+  1.339 sec [0]  |
+  1.655 sec [0]  |
+  1.970 sec [0]  |
+  2.286 sec [0]  |
+  2.601 sec [0]  |
+  2.917 sec [0]  |
+  3.232 sec [1]  |■
+
+Response time distribution:
+  10.00% in 0.0828 sec
+  25.00% in 0.0863 sec
+  50.00% in 0.0958 sec
+  75.00% in 0.1041 sec
+  90.00% in 0.1242 sec
+  95.00% in 0.1243 sec
+  99.00% in 3.2322 sec
+  99.90% in 3.2322 sec
+  99.99% in 3.2322 sec
+
+
+Details (average, fastest, slowest):
+  DNS+dialup:	0.0511 sec, 0.0511 sec, 0.0511 sec
+  DNS-lookup:	0.0001 sec, 0.0001 sec, 0.0001 sec
+
+Status code distribution:
+  [200] 30 responses
+
+=== Scenario A complete. Results in /home/ec2-user/lsc-lab-4-aws-cloud-lwilanski/loadtest/../results ===
+
+Next: check CloudWatch for Init Duration (cold start) entries:
+  aws logs filter-log-events --log-group-name /aws/lambda/lsc-knn-zip --filter-pattern 'Init Duration' --start-time $(date -d '30 minutes ago' +%s000) --query 'events[*].message' --output text
+  aws logs filter-log-events --log-group-name /aws/lambda/lsc-knn-container --filter-pattern 'Init Duration' --start-time $(date -d '30 minutes ago' +%s000) --query 'events[*].message' --output text
+[ec2-user@ip-172-31-91-96 lsc-lab-4-aws-cloud-lwilanski]$ 
+[ec2-user@ip-172-31-91-96 lsc-lab-4-aws-cloud-lwilanski]$ 
+[ec2-user@ip-172-31-91-96 lsc-lab-4-aws-cloud-lwilanski]$ 
+[ec2-user@ip-172-31-91-96 lsc-lab-4-aws-cloud-lwilanski]$ bash loadtest/scenario-b.sh "$LAMBDA_ZIP_URL" "$LAMBDA_CONTAINER_URL" "$FARGATE_URL" "$EC2_URL"
+=== Scenario B: Warm Steady-State Throughput ===
+--- Warm-up phase (60 requests at c=50 each) ---
+  Warming up Lambda Zip...
+  Warming up Lambda Container...
+  Warming up Fargate...
+  Warming up EC2...
+Warm-up complete.
+
+=== lambda-zip | concurrency=10 | 500 requests ===
+Summary:
+  Success rate:	100.00%
+  Total:	4696.5528 ms
+  Slowest:	166.6309 ms
+  Fastest:	56.5325 ms
+  Average:	93.2315 ms
+  Requests/sec:	106.4611
+
+  Total data:	185.49 KiB
+  Size/request:	379 B
+  Size/sec:	39.50 KiB
+
+Response time histogram:
+   56.532 ms [1]   |
+   67.542 ms [3]   |
+   78.552 ms [38]  |■■■■■
+   89.562 ms [146] |■■■■■■■■■■■■■■■■■■■■■
+  100.572 ms [214] |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  111.582 ms [81]  |■■■■■■■■■■■■
+  122.592 ms [7]   |■
+  133.601 ms [1]   |
+  144.611 ms [2]   |
+  155.621 ms [5]   |
+  166.631 ms [2]   |
+
+Response time distribution:
+  10.00% in 79.7665 ms
+  25.00% in 84.3499 ms
+  50.00% in 93.7381 ms
+  75.00% in 99.1072 ms
+  90.00% in 106.5144 ms
+  95.00% in 109.8962 ms
+  99.00% in 153.4491 ms
+  99.90% in 166.6309 ms
+  99.99% in 166.6309 ms
+
+
+Details (average, fastest, slowest):
+  DNS+dialup:	52.9706 ms, 51.5286 ms, 54.6913 ms
+  DNS-lookup:	0.0140 ms, 0.0082 ms, 0.0554 ms
+
+Status code distribution:
+  [200] 500 responses
+
+=== lambda-zip | concurrency=50 | 500 requests ===
+Summary:
+  Success rate:	100.00%
+  Total:	1282.6814 ms
+  Slowest:	871.1148 ms
+  Fastest:	32.6868 ms
+  Average:	98.2532 ms
+  Requests/sec:	389.8084
+
+  Total data:	185.48 KiB
+  Size/request:	379 B
+  Size/sec:	144.61 KiB
+
+Response time histogram:
+   32.687 ms [1]   |
+  116.530 ms [447] |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  200.372 ms [50]  |■■■
+  284.215 ms [0]   |
+  368.058 ms [0]   |
+  451.901 ms [0]   |
+  535.744 ms [0]   |
+  619.586 ms [0]   |
+  703.429 ms [0]   |
+  787.272 ms [1]   |
+  871.115 ms [1]   |
+
+Response time distribution:
+  10.00% in 71.4208 ms
+  25.00% in 84.2671 ms
+  50.00% in 91.7056 ms
+  75.00% in 99.2639 ms
+  90.00% in 147.7751 ms
+  95.00% in 166.9179 ms
+  99.00% in 186.6373 ms
+  99.90% in 871.1148 ms
+  99.99% in 871.1148 ms
+
+
+Details (average, fastest, slowest):
+  DNS+dialup:	69.3275 ms, 63.7067 ms, 74.3593 ms
+  DNS-lookup:	0.0139 ms, 0.0088 ms, 0.0639 ms
+
+Status code distribution:
+  [200] 500 responses
+
+=== lambda-container | concurrency=10 | 500 requests ===
+Summary:
+  Success rate:	100.00%
+  Total:	4689.3464 ms
+  Slowest:	169.6820 ms
+  Fastest:	65.4473 ms
+  Average:	93.0005 ms
+  Requests/sec:	106.6247
+
+  Total data:	185.49 KiB
+  Size/request:	379 B
+  Size/sec:	39.56 KiB
+
+Response time histogram:
+   65.447 ms [1]   |
+   75.871 ms [29]  |■■■■
+   86.294 ms [126] |■■■■■■■■■■■■■■■■■■■
+   96.718 ms [202] |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  107.141 ms [96]  |■■■■■■■■■■■■■■■
+  117.565 ms [33]  |■■■■■
+  127.988 ms [1]   |
+  138.412 ms [2]   |
+  148.835 ms [2]   |
+  159.259 ms [3]   |
+  169.682 ms [5]   |
+
+Response time distribution:
+  10.00% in 80.0635 ms
+  25.00% in 84.2526 ms
+  50.00% in 92.7109 ms
+  75.00% in 97.8210 ms
+  90.00% in 106.8611 ms
+  95.00% in 111.0945 ms
+  99.00% in 160.2165 ms
+  99.90% in 169.6820 ms
+  99.99% in 169.6820 ms
+
+
+Details (average, fastest, slowest):
+  DNS+dialup:	53.0268 ms, 51.6079 ms, 54.4926 ms
+  DNS-lookup:	0.0150 ms, 0.0093 ms, 0.0558 ms
+
+Status code distribution:
+  [200] 500 responses
+
+=== lambda-container | concurrency=50 | 500 requests ===
+Summary:
+  Success rate:	100.00%
+  Total:	1047.0322 ms
+  Slowest:	663.0329 ms
+  Fastest:	25.5783 ms
+  Average:	96.5988 ms
+  Requests/sec:	477.5402
+
+  Total data:	185.49 KiB
+  Size/request:	379 B
+  Size/sec:	177.16 KiB
+
+Response time histogram:
+   25.578 ms [1]   |
+   89.324 ms [208] |■■■■■■■■■■■■■■■■■■■■■■■■■■
+  153.069 ms [249] |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  216.815 ms [40]  |■■■■■
+  280.560 ms [1]   |
+  344.306 ms [0]   |
+  408.051 ms [0]   |
+  471.797 ms [0]   |
+  535.542 ms [0]   |
+  599.287 ms [0]   |
+  663.033 ms [1]   |
+
+Response time distribution:
+  10.00% in 73.1562 ms
+  25.00% in 84.7897 ms
+  50.00% in 91.3770 ms
+  75.00% in 100.0950 ms
+  90.00% in 141.2124 ms
+  95.00% in 166.2079 ms
+  99.00% in 178.1787 ms
+  99.90% in 663.0329 ms
+  99.99% in 663.0329 ms
+
+
+Details (average, fastest, slowest):
+  DNS+dialup:	65.3596 ms, 59.8895 ms, 70.4390 ms
+  DNS-lookup:	0.0168 ms, 0.0081 ms, 0.2153 ms
+
+Status code distribution:
+  [200] 500 responses
+
+=== fargate | concurrency=10 | 500 requests ===
+Summary:
+  Success rate:	100.00%
+  Total:	39.2454 sec
+  Slowest:	1.1247 sec
+  Fastest:	0.1412 sec
+  Average:	0.7803 sec
+  Requests/sec:	12.7403
+
+  Total data:	152.79 KiB
+  Size/request:	312 B
+  Size/sec:	3.89 KiB
+
+Response time histogram:
+  0.141 sec [1]   |
+  0.240 sec [1]   |
+  0.338 sec [1]   |
+  0.436 sec [5]   |■
+  0.535 sec [10]  |■■
+  0.633 sec [51]  |■■■■■■■■■■
+  0.731 sec [136] |■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  0.830 sec [155] |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  0.928 sec [82]  |■■■■■■■■■■■■■■■■
+  1.026 sec [45]  |■■■■■■■■■
+  1.125 sec [13]  |■■
+
+Response time distribution:
+  10.00% in 0.6098 sec
+  25.00% in 0.7000 sec
+  50.00% in 0.7940 sec
+  75.00% in 0.8867 sec
+  90.00% in 0.9843 sec
+  95.00% in 1.0021 sec
+  99.00% in 1.1004 sec
+  99.90% in 1.1247 sec
+  99.99% in 1.1247 sec
+
+
+Details (average, fastest, slowest):
+  DNS+dialup:	0.0005 sec, 0.0003 sec, 0.0007 sec
+  DNS-lookup:	0.0000 sec, 0.0000 sec, 0.0001 sec
+
+Status code distribution:
+  [200] 500 responses
+
+=== fargate | concurrency=50 | 500 requests ===
+Summary:
+  Success rate:	100.00%
+  Total:	39.6941 sec
+  Slowest:	4.8107 sec
+  Fastest:	0.1757 sec
+  Average:	3.8022 sec
+  Requests/sec:	12.5963
+
+  Total data:	152.79 KiB
+  Size/request:	312 B
+  Size/sec:	3.85 KiB
+
+Response time histogram:
+  0.176 sec [1]   |
+  0.639 sec [4]   |
+  1.103 sec [6]   |
+  1.566 sec [5]   |
+  2.030 sec [6]   |
+  2.493 sec [6]   |
+  2.957 sec [3]   |
+  3.420 sec [4]   |
+  3.884 sec [159] |■■■■■■■■■■■■■■■■■■
+  4.347 sec [269] |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  4.811 sec [37]  |■■■■
+
+Response time distribution:
+  10.00% in 3.6202 sec
+  25.00% in 3.7989 sec
+  50.00% in 3.9021 sec
+  75.00% in 4.0093 sec
+  90.00% in 4.1957 sec
+  95.00% in 4.4838 sec
+  99.00% in 4.6950 sec
+  99.90% in 4.8107 sec
+  99.99% in 4.8107 sec
+
+
+Details (average, fastest, slowest):
+  DNS+dialup:	0.0014 sec, 0.0006 sec, 0.0022 sec
+  DNS-lookup:	0.0000 sec, 0.0000 sec, 0.0001 sec
+
+Status code distribution:
+  [200] 500 responses
+
+=== ec2 | concurrency=10 | 500 requests ===
+Summary:
+  Success rate:	100.00%
+  Total:	9289.9972 ms
+  Slowest:	339.3815 ms
+  Fastest:	55.2788 ms
+  Average:	185.1511 ms
+  Requests/sec:	53.8213
+
+  Total data:	144.91 KiB
+  Size/request:	296 B
+  Size/sec:	15.60 KiB
+
+Response time histogram:
+   55.279 ms [1]   |
+   83.689 ms [2]   |
+  112.099 ms [15]  |■■
+  140.510 ms [35]  |■■■■■■
+  168.920 ms [97]  |■■■■■■■■■■■■■■■■■■
+  197.330 ms [169] |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  225.740 ms [111] |■■■■■■■■■■■■■■■■■■■■■
+  254.151 ms [59]  |■■■■■■■■■■■
+  282.561 ms [9]   |■
+  310.971 ms [1]   |
+  339.381 ms [1]   |
+
+Response time distribution:
+  10.00% in 138.8092 ms
+  25.00% in 160.7740 ms
+  50.00% in 187.8261 ms
+  75.00% in 209.2983 ms
+  90.00% in 233.3610 ms
+  95.00% in 246.8982 ms
+  99.00% in 270.7343 ms
+  99.90% in 339.3815 ms
+  99.99% in 339.3815 ms
+
+
+Details (average, fastest, slowest):
+  DNS+dialup:	0.5490 ms, 0.3598 ms, 1.8656 ms
+  DNS-lookup:	0.0091 ms, 0.0013 ms, 0.1829 ms
+
+Status code distribution:
+  [200] 500 responses
+
+=== ec2 | concurrency=50 | 500 requests ===
+Summary:
+  Success rate:	100.00%
+  Total:	9.4961 sec
+  Slowest:	1.3237 sec
+  Fastest:	0.1637 sec
+  Average:	0.9217 sec
+  Requests/sec:	52.6530
+
+  Total data:	144.93 KiB
+  Size/request:	296 B
+  Size/sec:	15.26 KiB
+
+Response time histogram:
+  0.164 sec [1]   |
+  0.280 sec [9]   |■
+  0.396 sec [5]   |
+  0.512 sec [7]   |■
+  0.628 sec [6]   |
+  0.744 sec [23]  |■■■
+  0.860 sec [61]  |■■■■■■■■■
+  0.976 sec [203] |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  1.092 sec [132] |■■■■■■■■■■■■■■■■■■■■
+  1.208 sec [36]  |■■■■■
+  1.324 sec [17]  |■■
+
+Response time distribution:
+  10.00% in 0.7433 sec
+  25.00% in 0.8705 sec
+  50.00% in 0.9401 sec
+  75.00% in 1.0170 sec
+  90.00% in 1.0973 sec
+  95.00% in 1.1818 sec
+  99.00% in 1.3132 sec
+  99.90% in 1.3237 sec
+  99.99% in 1.3237 sec
+
+
+Details (average, fastest, slowest):
+  DNS+dialup:	0.0006 sec, 0.0004 sec, 0.0046 sec
+  DNS-lookup:	0.0000 sec, 0.0000 sec, 0.0007 sec
+
+Status code distribution:
+  [200] 500 responses
+
+=== Scenario B complete. Results in /home/ec2-user/lsc-lab-4-aws-cloud-lwilanski/loadtest/../results ===
+[ec2-user@ip-172-31-91-96 lsc-lab-4-aws-cloud-lwilanski]$ 
+[ec2-user@ip-172-31-91-96 lsc-lab-4-aws-cloud-lwilanski]$ 
+[ec2-user@ip-172-31-91-96 lsc-lab-4-aws-cloud-lwilanski]$ 
+[ec2-user@ip-172-31-91-96 lsc-lab-4-aws-cloud-lwilanski]$ bash loadtest/scenario-c.sh "$LAMBDA_ZIP_URL" "$LAMBDA_CONTAINER_URL" "$FARGATE_URL" "$EC2_URL"
+=== Scenario C: Burst from Zero ===
+Ensure Lambda has been idle for 20+ minutes.
+Launching 200 requests at concurrency=50 to ALL targets simultaneously...
+
+Summary:
+  Success rate:	100.00%
+  Total:	1144.4240 ms
+  Slowest:	992.8884 ms
+  Fastest:	39.5518 ms
+  Average:	231.9391 ms
+  Requests/sec:	174.7604
+
+  Total data:	74.18 KiB
+  Size/request:	379 B
+  Size/sec:	64.82 KiB
+
+Response time histogram:
+   39.552 ms [1]   |
+  134.885 ms [121] |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  230.219 ms [8]   |■■
+  325.553 ms [25]  |■■■■■■
+  420.886 ms [18]  |■■■■
+  516.220 ms [0]   |
+  611.554 ms [0]   |
+  706.887 ms [8]   |■■
+  802.221 ms [11]  |■■
+  897.555 ms [2]   |
+  992.888 ms [6]   |■
+
+Response time distribution:
+  10.00% in 69.2906 ms
+  25.00% in 90.4265 ms
+  50.00% in 102.1570 ms
+  75.00% in 291.6849 ms
+  90.00% in 700.7262 ms
+  95.00% in 768.1186 ms
+  99.00% in 983.0606 ms
+  99.90% in 992.8884 ms
+  99.99% in 992.8884 ms
+
+
+Details (average, fastest, slowest):
+  DNS+dialup:	112.1718 ms, 103.3244 ms, 120.6271 ms
+  DNS-lookup:	0.0173 ms, 0.0127 ms, 0.0944 ms
+
+Status code distribution:
+  [200] 200 responses
+Summary:
+  Success rate:	100.00%
+  Total:	1.4742 sec
+  Slowest:	1.4642 sec
+  Fastest:	0.0434 sec
+  Average:	0.2787 sec
+  Requests/sec:	135.6673
+
+  Total data:	74.17 KiB
+  Size/request:	379 B
+  Size/sec:	50.31 KiB
+
+Response time histogram:
+  0.043 sec [1]   |
+  0.186 sec [141] |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  0.328 sec [24]  |■■■■■
+  0.470 sec [4]   |
+  0.612 sec [0]   |
+  0.754 sec [0]   |
+  0.896 sec [1]   |
+  1.038 sec [5]   |■
+  1.180 sec [3]   |
+  1.322 sec [20]  |■■■■
+  1.464 sec [1]   |
+
+Response time distribution:
+  10.00% in 0.0613 sec
+  25.00% in 0.0829 sec
+  50.00% in 0.0973 sec
+  75.00% in 0.2785 sec
+  90.00% in 1.2244 sec
+  95.00% in 1.2538 sec
+  99.00% in 1.2764 sec
+  99.90% in 1.4642 sec
+  99.99% in 1.4642 sec
+
+
+Details (average, fastest, slowest):
+  DNS+dialup:	0.1136 sec, 0.1048 sec, 0.1209 sec
+  DNS-lookup:	0.0000 sec, 0.0000 sec, 0.0001 sec
+
+Status code distribution:
+  [200] 200 responses
+Summary:
+  Success rate:	100.00%
+  Total:	3.7667 sec
+  Slowest:	1.1951 sec
+  Fastest:	0.0402 sec
+  Average:	0.8561 sec
+  Requests/sec:	53.0969
+
+  Total data:	57.97 KiB
+  Size/request:	296 B
+  Size/sec:	15.39 KiB
+
+Response time histogram:
+  0.040 sec [1]  |
+  0.156 sec [1]  |
+  0.271 sec [7]  |■■
+  0.387 sec [4]  |■
+  0.502 sec [5]  |■
+  0.618 sec [6]  |■■
+  0.733 sec [8]  |■■
+  0.849 sec [22] |■■■■■■■
+  0.964 sec [90] |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  1.080 sec [44] |■■■■■■■■■■■■■■■
+  1.195 sec [12] |■■■■
+
+Response time distribution:
+  10.00% in 0.5568 sec
+  25.00% in 0.8301 sec
+  50.00% in 0.9060 sec
+  75.00% in 0.9772 sec
+  90.00% in 1.0313 sec
+  95.00% in 1.0994 sec
+  99.00% in 1.1704 sec
+  99.90% in 1.1951 sec
+  99.99% in 1.1951 sec
+
+
+Details (average, fastest, slowest):
+  DNS+dialup:	0.0007 sec, 0.0004 sec, 0.0019 sec
+  DNS-lookup:	0.0000 sec, 0.0000 sec, 0.0000 sec
+
+Status code distribution:
+  [200] 200 responses
+Summary:
+  Success rate:	100.00%
+  Total:	15.4363 sec
+  Slowest:	4.2392 sec
+  Fastest:	0.2314 sec
+  Average:	3.4390 sec
+  Requests/sec:	12.9565
+
+  Total data:	61.10 KiB
+  Size/request:	312 B
+  Size/sec:	3.96 KiB
+
+Response time histogram:
+  0.231 sec [1]  |
+  0.632 sec [2]  |
+  1.033 sec [8]  |■■
+  1.434 sec [5]  |■
+  1.835 sec [4]  |■
+  2.235 sec [5]  |■
+  2.636 sec [5]  |■
+  3.037 sec [7]  |■■
+  3.438 sec [5]  |■
+  3.838 sec [86] |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+  4.239 sec [72] |■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+Response time distribution:
+  10.00% in 2.0156 sec
+  25.00% in 3.6236 sec
+  50.00% in 3.8005 sec
+  75.00% in 3.9032 sec
+  90.00% in 3.9985 sec
+  95.00% in 4.0835 sec
+  99.00% in 4.2218 sec
+  99.90% in 4.2392 sec
+  99.99% in 4.2392 sec
+
+
+Details (average, fastest, slowest):
+  DNS+dialup:	0.0014 sec, 0.0008 sec, 0.0023 sec
+  DNS-lookup:	0.0000 sec, 0.0000 sec, 0.0001 sec
+
+Status code distribution:
+  [200] 200 responses
+
+=== Scenario C complete. Results in /home/ec2-user/lsc-lab-4-aws-cloud-lwilanski/loadtest/../results ===
+[ec2-user@ip-172-31-91-96 lsc-lab-4-aws-cloud-lwilanski]$ Connection to 3.83.87.15 closed by remote host.
+Connection to 3.83.87.15 closed.
+lukasz@ukaszs-MacBook-Pro lsc-lab-4-aws-cloud-lwilanski % ssh -i /Users/lukasz/Documents/Repositories/lsc-lab-4-aws-cloud-lwilanski/deploy/lsc-knn-key.pem ec2-user@3.83.87.15
+ssh: connect to host 3.83.87.15 port 22: Operation timed out
+
+
